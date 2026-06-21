@@ -1,0 +1,2037 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Flashcard Flip App</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&display=swap');
+    :root {
+      --bg: #f7eadf;
+      --panel: #fffdf8;
+      --card: #ffffff;
+      --ink: #242424;
+      --muted: #4b4b4b;
+      --accent: #ffd23f;
+      --accent-dark: #e8b800;
+      --teal: #18a69a;
+      --pink: #ef4b91;
+      --purple: #91a7ff;
+      --green: #55e08a;
+      --border: #242424;
+      --shadow: 9px 9px 0 #242424;
+      --shadow-small: 5px 5px 0 #242424;
+      --radius: 28px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Arial, Helvetica, sans-serif;
+      background:
+        radial-gradient(circle at 8% 76%, rgba(239, 75, 145, 0.95) 0 58px, transparent 60px),
+        radial-gradient(circle at 92% 16%, rgba(145, 167, 255, 0.95) 0 54px, transparent 56px),
+        radial-gradient(circle at 91% 82%, rgba(255, 210, 63, 0.95) 0 58px, transparent 60px),
+        radial-gradient(circle at 5% 24%, rgba(24, 166, 154, 0.95) 0 52px, transparent 54px),
+        var(--bg);
+      color: var(--ink);
+      display: flex;
+      justify-content: center;
+      padding: 24px;
+    }
+
+
+    body::before,
+    body::after {
+      content: "";
+      position: fixed;
+      z-index: -1;
+      width: 86px;
+      height: 86px;
+      border: 4px solid var(--border);
+      border-radius: 50%;
+      background: transparent;
+      pointer-events: none;
+    }
+
+    body::before {
+      left: -30px;
+      top: 22%;
+      box-shadow: 0 0 0 34px var(--teal);
+    }
+
+    body::after {
+      right: -28px;
+      bottom: 18%;
+      box-shadow: 0 0 0 34px var(--accent);
+    }
+
+    .app {
+      width: min(100%, 1120px);
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      align-items: stretch;
+      margin-bottom: 18px;
+    }
+
+    .title-block {
+      background: var(--panel);
+      border: 4px solid var(--border);
+      border-radius: 34px;
+      box-shadow: var(--shadow);
+      padding: 28px 34px;
+      flex: 1;
+      position: relative;
+      overflow: visible;
+    }
+
+    .title-block::after {
+      content: "★";
+      position: absolute;
+      top: -34px;
+      right: 62px;
+      width: 86px;
+      height: 86px;
+      display: grid;
+      place-items: center;
+      background: var(--purple);
+      border: 4px solid var(--border);
+      border-radius: 18px;
+      box-shadow: var(--shadow-small);
+      transform: rotate(-12deg);
+      font-size: 2.2rem;
+      color: var(--ink);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(3.1rem, 8vw, 6.2rem);
+      line-height: 0.9;
+      letter-spacing: -0.07em;
+      text-transform: uppercase;
+      color: var(--ink);
+    }
+
+    .creator {
+      margin: 10px 0 0;
+      color: var(--muted);
+      font-size: 1rem;
+      font-weight: 800;
+    }
+
+    .stats {
+      background: var(--purple);
+      border: 4px solid var(--border);
+      border-radius: 999px;
+      box-shadow: var(--shadow);
+      padding: 22px 30px;
+      min-width: 210px;
+      text-align: center;
+      align-self: flex-start;
+      transform: rotate(0.5deg);
+    }
+
+    .stats strong {
+      display: block;
+      font-size: 2rem;
+    }
+
+    .stats span {
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .main-panel {
+      background: rgba(255, 253, 248, 0.96);
+      border: 4px solid var(--border);
+      border-radius: 38px;
+      box-shadow: 12px 12px 0 var(--border);
+      padding: 18px 34px 34px;
+      position: relative;
+      min-height: 660px;
+    }
+
+    .main-panel::before {
+      content: "";
+      position: absolute;
+      width: 74px;
+      height: 74px;
+      left: 42px;
+      top: -34px;
+      background: var(--teal);
+      border: 4px solid var(--border);
+      box-shadow: var(--shadow-small);
+      border-radius: 22px;
+      transform: rotate(7deg);
+      z-index: 0;
+    }
+
+    .main-panel::after {
+      content: "";
+      position: absolute;
+      width: 86px;
+      height: 54px;
+      right: 42px;
+      top: -28px;
+      background: var(--purple);
+      border: 4px solid var(--border);
+      box-shadow: var(--shadow-small);
+      border-radius: 999px;
+      transform: rotate(1deg);
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .deck-name {
+      display: flex;
+      justify-content: flex-start;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 0;
+      position: relative;
+      z-index: 3;
+      min-height: 32px;
+    }
+
+    .deck-name.compact {
+      margin-bottom: 0;
+    }
+
+    .deck-name h2 {
+      margin: 0;
+      font-size: 1.35rem;
+    }
+
+    .pill {
+      border: 4px solid var(--border);
+      border-radius: 999px;
+      padding: 10px 20px;
+      background: var(--accent);
+      font-size: 0.95rem;
+      font-weight: 900;
+      white-space: nowrap;
+      box-shadow: var(--shadow-small);
+      text-transform: uppercase;
+      color: var(--ink);
+    }
+
+    .card-stage {
+      position: relative;
+      z-index: 2;
+      perspective: 1400px;
+      width: 100%;
+      max-width: 980px;
+      margin: -4px auto 28px;
+      display: grid;
+      place-items: center;
+      overflow: visible;
+      background: transparent;
+      border: 0;
+      border-radius: 0;
+      box-shadow: none;
+      padding: 0;
+    }
+
+    .flashcard {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 9.2;
+      cursor: pointer;
+      transform-style: preserve-3d;
+      transition: transform 0.55s ease;
+      outline: none;
+      overflow: visible;
+    }
+
+    .flashcard.flipped {
+      transform: rotateY(180deg);
+    }
+
+    .card-face {
+      position: absolute;
+      inset: 0;
+      background: transparent;
+      backface-visibility: hidden;
+      overflow: visible;
+      display: grid;
+      place-items: center;
+      padding: 0;
+    }
+
+    .card-back {
+      transform: rotateY(180deg);
+      background: transparent;
+    }
+
+    .card-face img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      object-position: center center;
+      display: block;
+      margin: auto;
+      max-height: 100%;
+    }
+
+    .fallback-text {
+      width: 100%;
+      height: 100%;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      font-size: clamp(1.6rem, 5vw, 3.2rem);
+      font-weight: 800;
+      line-height: 1.15;
+      padding: 20px;
+    }
+
+
+    .tap-hint {
+      width: fit-content;
+      max-width: 92%;
+      margin: 34px auto 22px;
+      padding: 6px 14px;
+      background: var(--panel);
+      border: 3px solid var(--border);
+      border-radius: 999px;
+      box-shadow: var(--shadow-small);
+      text-align: center;
+      color: var(--ink);
+      font-size: 0.9rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+      position: relative;
+      z-index: 10;
+      clear: both;
+    }
+
+    .controls {
+      position: relative;
+      z-index: 2;
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+      margin-top: 4px;
+    }
+
+    button {
+      border: 4px solid var(--border);
+      background: var(--card);
+      color: var(--ink);
+      border-radius: 16px;
+      padding: 14px 16px;
+      font-size: 1rem;
+      font-weight: 900;
+      cursor: pointer;
+      box-shadow: var(--shadow-small);
+      transition: transform 0.08s ease, box-shadow 0.08s ease, background 0.15s ease;
+      text-transform: uppercase;
+      letter-spacing: 0.01em;
+    }
+
+    button:hover {
+      background: var(--accent);
+    }
+
+    button:active {
+      transform: translate(4px, 4px);
+      box-shadow: 0 0 0 #111827;
+    }
+
+    button.primary {
+      background: var(--accent);
+      color: var(--ink);
+    }
+
+    button.primary:hover {
+      background: var(--accent-dark);
+    }
+
+    button.good {
+      background: var(--green);
+      color: var(--ink);
+    }
+
+    .thumbs {
+      position: relative;
+      z-index: 2;
+      margin-top: 22px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .thumb {
+      width: 48px;
+      height: 44px;
+      min-width: 48px;
+      min-height: 44px;
+      border: 4px solid var(--border);
+      border-radius: 14px;
+      background: var(--card);
+      font-size: 1rem;
+      font-weight: 900;
+      line-height: 1;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 0;
+      box-shadow: var(--shadow-small);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .thumb:hover {
+      background: var(--purple);
+    }
+
+    .thumb.active {
+      background: var(--accent);
+      transform: translate(-1px, -1px);
+      box-shadow: 6px 6px 0 var(--border);
+    }
+
+    .thumb.done {
+      background: var(--green);
+    }
+
+    footer {
+      text-align: center;
+      color: var(--muted);
+      margin-top: 18px;
+      font-size: 0.9rem;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .completion-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      background: rgba(247, 234, 223, 0.76);
+      backdrop-filter: blur(3px);
+    }
+
+    .completion-overlay.hidden {
+      display: none;
+    }
+
+    .completion-card {
+      position: relative;
+      width: min(92vw, 460px);
+      background: var(--accent);
+      border: 5px solid var(--border);
+      border-radius: 28px;
+      box-shadow: 14px 14px 0 var(--border);
+      padding: 30px 24px;
+      text-align: center;
+      animation: popCard 0.35s ease both;
+    }
+
+    .completion-card h2 {
+      margin: 0;
+      font-size: clamp(3rem, 12vw, 5.8rem);
+      line-height: 0.9;
+      letter-spacing: -0.06em;
+      text-transform: uppercase;
+    }
+
+    .completion-card p {
+      margin: 12px 0 22px;
+      font-size: 1.2rem;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .completion-burst {
+      position: absolute;
+      top: -28px;
+      right: -22px;
+      width: 72px;
+      height: 72px;
+      display: grid;
+      place-items: center;
+      background: var(--pink);
+      border: 5px solid var(--border);
+      border-radius: 50%;
+      box-shadow: var(--shadow-small);
+      font-size: 2rem;
+      animation: spinPop 0.7s ease both;
+    }
+
+    .confetti-piece {
+      position: fixed;
+      top: -18px;
+      z-index: 60;
+      width: 12px;
+      height: 18px;
+      border: 2px solid var(--border);
+      animation: confettiFall linear forwards;
+      pointer-events: none;
+    }
+
+    @keyframes confettiFall {
+      0% {
+        transform: translateY(-20px) rotate(0deg);
+        opacity: 1;
+      }
+      100% {
+        transform: translateY(105vh) rotate(720deg);
+        opacity: 0.95;
+      }
+    }
+
+    @keyframes popCard {
+      from {
+        transform: scale(0.88) rotate(-2deg);
+        opacity: 0;
+      }
+      to {
+        transform: scale(1) rotate(-1deg);
+        opacity: 1;
+      }
+    }
+
+    @keyframes spinPop {
+      from {
+        transform: scale(0.6) rotate(-120deg);
+      }
+      to {
+        transform: scale(1) rotate(8deg);
+      }
+    }
+
+
+    @media (max-width: 760px) {
+      body {
+        padding: 14px;
+      }
+
+      header {
+        flex-direction: column;
+      }
+
+      .title-block::after {
+        right: 22px;
+        top: -26px;
+        width: 64px;
+        height: 64px;
+      }
+
+      .stats {
+        width: 100%;
+      }
+
+      .main-panel::before {
+      content: "";
+      position: absolute;
+      width: 76px;
+      height: 28px;
+      left: 26px;
+      top: -18px;
+      background: var(--cyan);
+      border: 4px solid var(--border);
+      box-shadow: var(--shadow-small);
+      transform: rotate(-2deg);
+      z-index: 0;
+    }
+
+    .main-panel::after {
+      content: "";
+      position: absolute;
+      width: 54px;
+      height: 54px;
+      right: 28px;
+      top: -24px;
+      background: var(--pink);
+      border: 4px solid var(--border);
+      box-shadow: var(--shadow-small);
+      border-radius: 50%;
+      transform: rotate(5deg);
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .deck-name {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .controls {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      button.wide {
+        grid-column: span 2;
+      }
+
+      .main-panel {
+        padding: 16px;
+        min-height: auto;
+      }
+
+      .flashcard {
+        aspect-ratio: 16 / 10;
+      }
+    }
+  
+    .progress-wrap {
+      width: 100%;
+      height: 18px;
+      margin: 12px auto 6px;
+      background: var(--panel);
+      border: 3px solid var(--border);
+      border-radius: 999px;
+      overflow: hidden;
+      box-shadow: 3px 3px 0 var(--border);
+    }
+
+    .progress-bar {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, var(--green), var(--accent));
+      transition: width 0.25s ease;
+    }
+
+    .progress-percent {
+      display: block;
+      color: var(--ink);
+      font-size: 0.85rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      margin-top: 4px;
+    }
+
+    .card-stage {
+      max-width: 1020px;
+      margin-top: -2px;
+      margin-bottom: 16px;
+    }
+
+    .flashcard {
+      aspect-ratio: 16 / 9.2;
+    }
+
+    .tap-hint {
+      margin-top: 16px;
+      margin-bottom: 18px;
+    }
+
+    .main-panel {
+      overflow: visible;
+    }
+
+    @media (max-width: 760px) {
+      body {
+        padding: 10px;
+        display: block;
+        overflow-x: hidden;
+        background:
+          radial-gradient(circle at -8% 28%, rgba(24, 166, 154, 0.9) 0 72px, transparent 74px),
+          radial-gradient(circle at 108% 14%, rgba(145, 167, 255, 0.9) 0 62px, transparent 64px),
+          radial-gradient(circle at 102% 82%, rgba(255, 210, 63, 0.9) 0 58px, transparent 60px),
+          var(--bg);
+      }
+
+      body::before,
+      body::after {
+        display: none;
+      }
+
+      .app {
+        width: 100%;
+      }
+
+      header {
+        gap: 10px;
+        margin-bottom: 10px;
+      }
+
+      .title-block {
+        border-radius: 24px;
+        padding: 16px 18px 14px;
+        box-shadow: 6px 6px 0 var(--border);
+        transform: none;
+      }
+
+      .title-block::after {
+        width: 46px;
+        height: 46px;
+        top: -18px;
+        right: 18px;
+        border-radius: 12px;
+        box-shadow: 3px 3px 0 var(--border);
+        font-size: 1.35rem;
+      }
+
+      h1 {
+        font-size: clamp(2.2rem, 12vw, 3.6rem);
+        line-height: 0.9;
+      }
+
+      .creator {
+        font-size: 0.9rem;
+        margin-top: 8px;
+      }
+
+      .stats {
+        width: 100%;
+        min-width: 0;
+        border-radius: 22px;
+        padding: 10px 14px;
+        box-shadow: 6px 6px 0 var(--border);
+        transform: none;
+        background: var(--purple);
+      }
+
+      .stats strong {
+        font-size: 1.65rem;
+        line-height: 1;
+      }
+
+      .stats span {
+        font-size: 0.85rem;
+      }
+
+      .progress-wrap {
+        height: 14px;
+        margin: 8px auto 4px;
+      }
+
+      .progress-percent {
+        font-size: 0.75rem;
+      }
+
+      .main-panel {
+        border-radius: 26px;
+        padding: 10px 10px 18px;
+        min-height: auto;
+        box-shadow: 7px 7px 0 var(--border);
+      }
+
+      .main-panel::before,
+      .main-panel::after {
+        display: none;
+      }
+
+      .deck-name {
+        min-height: 0;
+        margin-bottom: 6px;
+      }
+
+      .pill {
+        padding: 7px 14px;
+        border-width: 3px;
+        font-size: 0.8rem;
+        box-shadow: 3px 3px 0 var(--border);
+      }
+
+      .card-stage {
+        width: 100%;
+        max-width: 100%;
+        margin: 0 auto 12px;
+      }
+
+      .flashcard {
+        width: 100%;
+        aspect-ratio: 4 / 3.05;
+      }
+
+      .card-face {
+        overflow: visible;
+      }
+
+      .card-face img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+      }
+
+      .tap-hint {
+        display: block;
+        width: fit-content;
+        max-width: calc(100% - 20px);
+        margin: 10px auto 12px;
+        padding: 5px 12px;
+        font-size: 0.74rem;
+        border-width: 2px;
+        box-shadow: 3px 3px 0 var(--border);
+      }
+
+      .controls {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+        margin-top: 8px;
+      }
+
+      button {
+        border-width: 3px;
+        border-radius: 14px;
+        padding: 11px 8px;
+        font-size: 0.82rem;
+        box-shadow: 4px 4px 0 var(--border);
+      }
+
+      button.wide {
+        grid-column: span 2;
+      }
+
+      #shuffleBtn {
+        grid-column: span 2;
+      }
+
+      .thumbs {
+        margin-top: 14px;
+        flex-wrap: nowrap;
+        justify-content: flex-start;
+        overflow-x: auto;
+        overflow-y: hidden;
+        padding: 4px 4px 10px;
+        gap: 8px;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+      }
+
+      .thumb {
+        flex: 0 0 auto;
+        width: 38px;
+        height: 36px;
+        min-width: 38px;
+        min-height: 36px;
+        border-width: 3px;
+        border-radius: 12px;
+        font-size: 0.85rem;
+        box-shadow: 3px 3px 0 var(--border);
+      }
+
+      .thumb.active {
+        box-shadow: 4px 4px 0 var(--border);
+      }
+
+      .completion-card {
+        width: min(92vw, 360px);
+        border-width: 4px;
+        box-shadow: 8px 8px 0 var(--border);
+        padding: 24px 18px;
+      }
+
+      .completion-card h2 {
+        font-size: clamp(2.8rem, 16vw, 4.5rem);
+      }
+    }
+
+    @media (max-width: 420px) {
+      h1 {
+        font-size: clamp(2rem, 11vw, 3.1rem);
+      }
+
+      .creator {
+        font-size: 0.82rem;
+      }
+
+      .stats strong {
+        font-size: 1.45rem;
+      }
+
+      .flashcard {
+        aspect-ratio: 4 / 3.15;
+      }
+
+      .controls {
+        gap: 7px;
+      }
+
+      button {
+        font-size: 0.78rem;
+        padding: 10px 6px;
+      }
+    }
+
+    @media (max-height: 760px) and (max-width: 760px) {
+      .title-block {
+        padding: 12px 16px 10px;
+      }
+
+      h1 {
+        font-size: clamp(1.9rem, 10vw, 2.8rem);
+      }
+
+      .creator {
+        margin-top: 4px;
+      }
+
+      .stats {
+        padding: 8px 12px;
+      }
+
+      .main-panel {
+        padding-top: 8px;
+      }
+
+      .flashcard {
+        aspect-ratio: 16 / 10.2;
+      }
+    }
+
+  
+    /* Final design clean-up */
+    :root {
+      --radius: 24px;
+    }
+
+    .title-block,
+    .stats,
+    .main-panel,
+    .pill,
+    button,
+    .thumb,
+    .completion-card,
+    .completion-burst,
+    .progress-wrap,
+    .tap-hint {
+      border-radius: var(--radius) !important;
+    }
+
+    h1 {
+      white-space: nowrap;
+      font-size: clamp(2.4rem, 6.2vw, 5.2rem);
+    }
+
+    .title-block::after,
+    .main-panel::before,
+    .main-panel::after,
+    body::before,
+    body::after {
+      display: none !important;
+    }
+
+    body {
+      background:
+        radial-gradient(circle at 8% 76%, rgba(239, 75, 145, 0.85) 0 52px, transparent 54px),
+        radial-gradient(circle at 92% 82%, rgba(255, 210, 63, 0.82) 0 54px, transparent 56px),
+        var(--bg) !important;
+    }
+
+    .title-block {
+      transform: none !important;
+    }
+
+    .stats {
+      transform: none !important;
+    }
+
+    .visually-hidden {
+      position: absolute !important;
+      width: 1px !important;
+      height: 1px !important;
+      padding: 0 !important;
+      margin: -1px !important;
+      overflow: hidden !important;
+      clip: rect(0, 0, 0, 0) !important;
+      white-space: nowrap !important;
+      border: 0 !important;
+    }
+
+    @media (max-width: 760px) {
+      body {
+        background:
+          radial-gradient(circle at 104% 82%, rgba(255, 210, 63, 0.78) 0 48px, transparent 50px),
+          radial-gradient(circle at -6% 76%, rgba(239, 75, 145, 0.72) 0 46px, transparent 48px),
+          var(--bg) !important;
+      }
+
+      h1 {
+        white-space: nowrap;
+        font-size: clamp(1.9rem, 9vw, 3rem);
+        letter-spacing: -0.07em;
+      }
+
+      .title-block {
+        padding-right: 18px;
+      }
+
+      .main-panel {
+        padding-top: 14px;
+      }
+    }
+
+    @media (max-width: 380px) {
+      h1 {
+        font-size: clamp(1.65rem, 8vw, 2.5rem);
+      }
+    }
+
+  
+    .card-selector-label {
+      position: relative;
+      z-index: 2;
+      margin: 18px auto 8px;
+      width: fit-content;
+      padding: 5px 12px;
+      background: var(--panel);
+      border: 3px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: 3px 3px 0 var(--border);
+      font-size: 0.82rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .thumbs {
+      display: flex !important;
+      flex-wrap: wrap !important;
+      justify-content: center !important;
+      align-items: center !important;
+      gap: 9px !important;
+      overflow: visible !important;
+      padding: 4px 4px 8px !important;
+      max-width: 100% !important;
+    }
+
+    .thumb {
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      width: 42px !important;
+      height: 40px !important;
+      min-width: 42px !important;
+      min-height: 40px !important;
+      padding: 0 !important;
+      border: 3px solid var(--border) !important;
+      border-radius: var(--radius) !important;
+      background: var(--card) !important;
+      color: var(--ink) !important;
+      font-size: 0.9rem !important;
+      font-weight: 900 !important;
+      line-height: 1 !important;
+      box-shadow: 3px 3px 0 var(--border) !important;
+      flex: 0 0 auto !important;
+    }
+
+    .thumb.active {
+      background: var(--accent) !important;
+      box-shadow: 4px 4px 0 var(--border) !important;
+      transform: translate(-1px, -1px);
+    }
+
+    .thumb.done {
+      background: var(--green) !important;
+    }
+
+    .thumb.done.active {
+      background: linear-gradient(135deg, var(--green) 0 48%, var(--accent) 50% 100%) !important;
+    }
+
+    @media (max-width: 760px) {
+      .card-selector-label {
+        margin-top: 16px;
+        font-size: 0.75rem;
+      }
+
+      .thumbs {
+        flex-wrap: wrap !important;
+        justify-content: center !important;
+        gap: 7px !important;
+        overflow: visible !important;
+        padding-bottom: 10px !important;
+      }
+
+      .thumb {
+        width: 34px !important;
+        height: 32px !important;
+        min-width: 34px !important;
+        min-height: 32px !important;
+        font-size: 0.76rem !important;
+        border-width: 2px !important;
+        box-shadow: 2px 2px 0 var(--border) !important;
+      }
+    }
+
+  
+    /* Numbered card selector buttons */
+    .card-selector-label {
+      display: none !important;
+    }
+
+    .thumbs {
+      position: relative;
+      z-index: 2;
+      margin-top: 18px !important;
+      display: flex !important;
+      gap: 8px !important;
+      flex-wrap: wrap !important;
+      justify-content: center !important;
+      align-items: center !important;
+      overflow: visible !important;
+      padding: 4px 0 8px !important;
+    }
+
+    .thumb {
+      width: 44px !important;
+      height: 40px !important;
+      min-width: 44px !important;
+      min-height: 40px !important;
+      border: 3px solid var(--border) !important;
+      border-radius: var(--radius) !important;
+      background: var(--card) !important;
+      color: var(--ink) !important;
+      font-size: 0.9rem !important;
+      font-weight: 900 !important;
+      line-height: 1 !important;
+      cursor: pointer !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      text-align: center !important;
+      padding: 0 !important;
+      box-shadow: 3px 3px 0 var(--border) !important;
+      font-variant-numeric: tabular-nums !important;
+      flex: 0 0 auto !important;
+    }
+
+    .thumb:hover {
+      background: var(--purple) !important;
+    }
+
+    .thumb.active {
+      background: var(--accent) !important;
+      transform: translate(-1px, -1px) !important;
+      box-shadow: 4px 4px 0 var(--border) !important;
+    }
+
+    .thumb.done {
+      background: var(--green) !important;
+    }
+
+    .thumb.done.active {
+      background: linear-gradient(135deg, var(--green) 0 48%, var(--accent) 50% 100%) !important;
+    }
+
+    @media (max-width: 760px) {
+      .thumbs {
+        margin-top: 14px !important;
+        gap: 7px !important;
+        flex-wrap: wrap !important;
+        justify-content: center !important;
+        overflow: visible !important;
+        padding-bottom: 14px !important;
+      }
+
+      .thumb {
+        width: 34px !important;
+        height: 32px !important;
+        min-width: 34px !important;
+        min-height: 32px !important;
+        font-size: 0.76rem !important;
+        border-width: 2px !important;
+        box-shadow: 2px 2px 0 var(--border) !important;
+      }
+    }
+
+  
+    .controls button,
+    .thumbs button,
+    #flashcard,
+    #restartBtn {
+      pointer-events: auto !important;
+    }
+
+    .controls,
+    .thumbs,
+    .card-stage,
+    .completion-overlay {
+      pointer-events: auto !important;
+    }
+
+    .title-block::after,
+    .main-panel::before,
+    .main-panel::after,
+    body::before,
+    body::after {
+      pointer-events: none !important;
+    }
+
+  
+    /* Final compact neo-brutalist refinement */
+    :root {
+      --bg: #f4e6d7;
+      --panel: #fffaf2;
+      --card: #ffffff;
+      --ink: #242424;
+      --muted: #55504b;
+      --accent: #ffd24a;
+      --accent-dark: #e8b83a;
+      --red: #ef4444;
+      --yellow: #facc15;
+      --green: #4ade80;
+      --teal: #8ddfd3;
+      --pink: #e15b93;
+      --purple: #9aaaf7;
+      --border: #242424;
+      --radius: 12px;
+      --shadow: 5px 5px 0 #242424;
+      --shadow-small: 3px 3px 0 #242424;
+    }
+
+    body {
+      background-color: var(--bg) !important;
+      background-image:
+        radial-gradient(rgba(36, 36, 36, 0.16) 1px, transparent 1.2px) !important;
+      background-size: 18px 18px !important;
+      background-position: 0 0 !important;
+    }
+
+    body::before,
+    body::after,
+    .title-block::after,
+    .main-panel::before,
+    .main-panel::after {
+      display: none !important;
+    }
+
+    .title-block,
+    .stats,
+    .main-panel,
+    .pill,
+    button,
+    .thumb,
+    .completion-card,
+    .completion-burst,
+    .progress-wrap,
+    .tap-hint,
+    .card-face,
+    .fallback-text {
+      border-radius: var(--radius) !important;
+    }
+
+    .title-block,
+    .stats,
+    .main-panel,
+    .completion-card {
+      border-width: 3px !important;
+      box-shadow: var(--shadow) !important;
+      transform: none !important;
+    }
+
+    .title-block {
+      padding: 20px 24px !important;
+    }
+
+    h1 {
+      white-space: nowrap !important;
+      font-size: clamp(2.2rem, 5.5vw, 4.8rem) !important;
+      letter-spacing: -0.06em !important;
+    }
+
+    .creator {
+      font-size: 0.95rem !important;
+      margin-top: 8px !important;
+    }
+
+    .stats {
+      background: var(--purple) !important;
+      padding: 18px 22px !important;
+      min-width: 200px !important;
+    }
+
+    .stats strong {
+      font-size: 2rem !important;
+    }
+
+    .progress-wrap {
+      height: 16px !important;
+      border-width: 2px !important;
+      box-shadow: var(--shadow-small) !important;
+      background: var(--panel) !important;
+    }
+
+    .progress-bar {
+      background: linear-gradient(90deg, var(--red) 0%, var(--yellow) 50%, var(--green) 100%) !important;
+    }
+
+    .main-panel {
+      background: rgba(255, 250, 242, 0.96) !important;
+      padding: 18px 24px 26px !important;
+      min-height: auto !important;
+    }
+
+    .card-stage {
+      max-width: 1040px !important;
+      margin: 0 auto 14px !important;
+    }
+
+    .flashcard {
+      aspect-ratio: 16 / 9.25 !important;
+    }
+
+    .card-face img {
+      border-radius: var(--radius) !important;
+    }
+
+    .tap-hint {
+      margin: 14px auto 18px !important;
+      padding: 6px 14px !important;
+      border-width: 2px !important;
+      box-shadow: var(--shadow-small) !important;
+      font-size: 0.86rem !important;
+      background: var(--panel) !important;
+    }
+
+    button {
+      border-width: 3px !important;
+      border-radius: var(--radius) !important;
+      box-shadow: var(--shadow-small) !important;
+      padding: 12px 14px !important;
+      font-size: 0.92rem !important;
+    }
+
+    button:active {
+      transform: translate(3px, 3px) !important;
+      box-shadow: 0 0 0 var(--border) !important;
+    }
+
+    .controls {
+      gap: 10px !important;
+    }
+
+    .thumbs {
+      margin-top: 16px !important;
+      gap: 7px !important;
+      flex-wrap: wrap !important;
+      justify-content: center !important;
+      overflow: visible !important;
+      padding: 4px 0 8px !important;
+    }
+
+    .thumb {
+      width: 38px !important;
+      height: 36px !important;
+      min-width: 38px !important;
+      min-height: 36px !important;
+      border-width: 2px !important;
+      border-radius: var(--radius) !important;
+      box-shadow: 2px 2px 0 var(--border) !important;
+      font-size: 0.82rem !important;
+      padding: 0 !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      line-height: 1 !important;
+    }
+
+    .thumb.active {
+      box-shadow: 3px 3px 0 var(--border) !important;
+      transform: translate(-1px, -1px) !important;
+    }
+
+    .thumb.done {
+      background: var(--green) !important;
+    }
+
+    .completion-card {
+      background: var(--accent) !important;
+    }
+
+    .completion-burst {
+      border-width: 3px !important;
+      box-shadow: var(--shadow-small) !important;
+    }
+
+    @media (max-width: 760px) {
+      body {
+        padding: 8px !important;
+        background-color: var(--bg) !important;
+        background-image:
+          radial-gradient(rgba(36, 36, 36, 0.15) 1px, transparent 1.2px) !important;
+        background-size: 16px 16px !important;
+      }
+
+      header {
+        gap: 8px !important;
+        margin-bottom: 8px !important;
+      }
+
+      .title-block {
+        padding: 12px 14px 10px !important;
+        box-shadow: var(--shadow-small) !important;
+      }
+
+      h1 {
+        font-size: clamp(1.55rem, 8vw, 2.6rem) !important;
+        white-space: nowrap !important;
+      }
+
+      .creator {
+        font-size: 0.78rem !important;
+        margin-top: 4px !important;
+      }
+
+      .stats {
+        padding: 9px 12px !important;
+        box-shadow: var(--shadow-small) !important;
+        min-width: 0 !important;
+      }
+
+      .stats strong {
+        font-size: 1.35rem !important;
+      }
+
+      .stats span {
+        font-size: 0.76rem !important;
+      }
+
+      .progress-wrap {
+        height: 12px !important;
+        margin: 6px auto 3px !important;
+      }
+
+      .progress-percent {
+        font-size: 0.7rem !important;
+      }
+
+      .main-panel {
+        padding: 8px 8px 14px !important;
+        box-shadow: var(--shadow-small) !important;
+      }
+
+      .card-stage {
+        margin: 0 auto 8px !important;
+      }
+
+      .flashcard {
+        aspect-ratio: 4 / 3.05 !important;
+      }
+
+      .tap-hint {
+        margin: 8px auto 10px !important;
+        padding: 4px 10px !important;
+        font-size: 0.68rem !important;
+      }
+
+      .controls {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 7px !important;
+      }
+
+      button {
+        padding: 9px 7px !important;
+        font-size: 0.74rem !important;
+        border-width: 2px !important;
+        box-shadow: 2px 2px 0 var(--border) !important;
+      }
+
+      button.wide,
+      #shuffleBtn {
+        grid-column: span 2 !important;
+      }
+
+      .thumbs {
+        margin-top: 12px !important;
+        gap: 6px !important;
+        padding-bottom: 10px !important;
+      }
+
+      .thumb {
+        width: 31px !important;
+        height: 29px !important;
+        min-width: 31px !important;
+        min-height: 29px !important;
+        font-size: 0.68rem !important;
+        border-width: 2px !important;
+        box-shadow: 2px 2px 0 var(--border) !important;
+      }
+    }
+
+    @media (max-width: 480px) {
+      body {
+        padding: 6px !important;
+        background-size: 14px 14px !important;
+      }
+
+      .title-block {
+        padding: 10px 12px 8px !important;
+      }
+
+      h1 {
+        font-size: clamp(1.35rem, 7.4vw, 2.1rem) !important;
+        letter-spacing: -0.055em !important;
+      }
+
+      .creator {
+        font-size: 0.72rem !important;
+      }
+
+      .stats {
+        padding: 8px 10px !important;
+      }
+
+      .stats strong {
+        font-size: 1.2rem !important;
+      }
+
+      .main-panel {
+        padding: 7px 7px 12px !important;
+      }
+
+      .flashcard {
+        aspect-ratio: 4 / 3.2 !important;
+      }
+
+      .tap-hint {
+        font-size: 0.64rem !important;
+        padding: 4px 8px !important;
+      }
+
+      button {
+        font-size: 0.68rem !important;
+        padding: 8px 5px !important;
+      }
+
+      .thumbs {
+        gap: 5px !important;
+      }
+
+      .thumb {
+        width: 28px !important;
+        height: 27px !important;
+        min-width: 28px !important;
+        min-height: 27px !important;
+        font-size: 0.62rem !important;
+      }
+    }
+
+  
+    /* Header font and button layout update */
+    h1 {
+      font-family: "Fredoka", Arial, Helvetica, sans-serif !important;
+      font-weight: 700 !important;
+      letter-spacing: -0.035em !important;
+    }
+
+    .controls {
+      grid-template-columns: repeat(4, 1fr) !important;
+    }
+
+    #knownBtn {
+      background: var(--green) !important;
+    }
+
+    @media (max-width: 760px) {
+      .controls {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+      }
+
+      #knownBtn,
+      #shuffleBtn {
+        grid-column: span 2 !important;
+      }
+    }
+
+  
+    /* Fredoka typography refinement */
+    h1 {
+      font-family: "Fredoka", Arial, Helvetica, sans-serif !important;
+      letter-spacing: 0.035em !important;
+    }
+
+    .creator {
+      font-family: "Fredoka", Arial, Helvetica, sans-serif !important;
+      font-weight: 600 !important;
+      letter-spacing: 0.015em !important;
+    }
+
+    #knownNumber {
+      display: none !important;
+    }
+
+  
+    .tap-hint {
+      width: auto !important;
+      max-width: none !important;
+      margin: 8px auto 14px !important;
+      padding: 0 !important;
+      background: transparent !important;
+      border: 0 !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+      color: #77716b !important;
+      font-size: 0.86rem !important;
+      font-weight: 600 !important;
+      text-transform: none !important;
+      letter-spacing: 0 !important;
+      text-align: center !important;
+    }
+
+    @media (max-width: 760px) {
+      .tap-hint {
+        margin: 6px auto 10px !important;
+        font-size: 0.72rem !important;
+        padding: 0 !important;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .tap-hint {
+        font-size: 0.68rem !important;
+      }
+    }
+
+  
+    /* Dynamic card sizing: fallback only. JS updates this to match the loaded JPG ratio. */
+    .flashcard {
+      aspect-ratio: var(--loaded-card-ratio, 16 / 9.2) !important;
+    }
+
+    .card-face img {
+      object-fit: contain !important;
+      object-position: center center !important;
+    }
+
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header>
+      <section class="title-block">
+        <h1>FLASHCARD FLIP</h1>
+        <p class="creator">Created by Mr. Jansen Tan</p>
+      </section>
+
+      <section class="stats" aria-live="polite">
+        <strong id="progressNumber">0 / 18</strong>
+        <span id="knownNumber">0 marked known</span>
+        <div class="progress-wrap" aria-label="Completed cards progress">
+          <div class="progress-bar" id="progressBar"></div>
+        </div>
+        <span class="progress-percent" id="progressPercent">0% complete</span>
+      </section>
+    </header>
+
+    <section class="main-panel">
+
+      <span id="modePill" class="visually-hidden">Front</span>
+
+      <div class="card-stage">
+        <article
+          class="flashcard"
+          id="flashcard"
+          tabindex="0"
+          role="button"
+          aria-label="Flashcard. Press enter or space to flip."
+        >
+          <section class="card-face card-front">
+            <img id="frontImage" alt="Front of flashcard" />
+            <div id="frontText" class="fallback-text hidden"></div>
+          </section>
+
+          <section class="card-face card-back">
+            <img id="backImage" alt="Back of flashcard" />
+            <div id="backText" class="fallback-text hidden"></div>
+          </section>
+        </article>
+      </div>
+
+      <p class="tap-hint">Tap the card to flip</p>
+
+      <div class="controls">
+        <button id="prevBtn">← Previous</button>
+        <button id="nextBtn">Next →</button>
+        <button id="shuffleBtn">Shuffle</button>
+        <button id="knownBtn" class="good wide">Mark Known</button>
+      </div>
+
+      <div class="thumbs" id="thumbs"></div>
+    </section>
+
+    <section class="completion-overlay hidden" id="completionOverlay" aria-live="polite">
+      <div class="completion-card">
+        <div class="completion-burst">★</div>
+        <h2>Ta-da!</h2>
+        <p>All 18 cards complete.</p>
+        <button id="restartBtn" class="primary">Restart Deck</button>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    let cards = [
+      {
+        front: "images/card1-front.jpg",
+        back: "images/card1-back.jpg",
+        frontText: "Image missing: card1-front.jpg",
+        backText: "Image missing: card1-back.jpg"
+      },
+      {
+        front: "images/card2-front.jpg",
+        back: "images/card2-back.jpg",
+        frontText: "Image missing: card2-front.jpg",
+        backText: "Image missing: card2-back.jpg"
+      },
+      {
+        front: "images/card3-front.jpg",
+        back: "images/card3-back.jpg",
+        frontText: "Image missing: card3-front.jpg",
+        backText: "Image missing: card3-back.jpg"
+      },
+      {
+        front: "images/card4-front.jpg",
+        back: "images/card4-back.jpg",
+        frontText: "Image missing: card4-front.jpg",
+        backText: "Image missing: card4-back.jpg"
+      },
+      {
+        front: "images/card5-front.jpg",
+        back: "images/card5-back.jpg",
+        frontText: "Image missing: card5-front.jpg",
+        backText: "Image missing: card5-back.jpg"
+      },
+      {
+        front: "images/card6-front.jpg",
+        back: "images/card6-back.jpg",
+        frontText: "Image missing: card6-front.jpg",
+        backText: "Image missing: card6-back.jpg"
+      },
+      {
+        front: "images/card7-front.jpg",
+        back: "images/card7-back.jpg",
+        frontText: "Image missing: card7-front.jpg",
+        backText: "Image missing: card7-back.jpg"
+      },
+      {
+        front: "images/card8-front.jpg",
+        back: "images/card8-back.jpg",
+        frontText: "Image missing: card8-front.jpg",
+        backText: "Image missing: card8-back.jpg"
+      },
+      {
+        front: "images/card9-front.jpg",
+        back: "images/card9-back.jpg",
+        frontText: "Image missing: card9-front.jpg",
+        backText: "Image missing: card9-back.jpg"
+      },
+      {
+        front: "images/card10-front.jpg",
+        back: "images/card10-back.jpg",
+        frontText: "Image missing: card10-front.jpg",
+        backText: "Image missing: card10-back.jpg"
+      },
+      {
+        front: "images/card11-front.jpg",
+        back: "images/card11-back.jpg",
+        frontText: "Image missing: card11-front.jpg",
+        backText: "Image missing: card11-back.jpg"
+      },
+      {
+        front: "images/card12-front.jpg",
+        back: "images/card12-back.jpg",
+        frontText: "Image missing: card12-front.jpg",
+        backText: "Image missing: card12-back.jpg"
+      },
+      {
+        front: "images/card13-front.jpg",
+        back: "images/card13-back.jpg",
+        frontText: "Image missing: card13-front.jpg",
+        backText: "Image missing: card13-back.jpg"
+      },
+      {
+        front: "images/card14-front.jpg",
+        back: "images/card14-back.jpg",
+        frontText: "Image missing: card14-front.jpg",
+        backText: "Image missing: card14-back.jpg"
+      },
+      {
+        front: "images/card15-front.jpg",
+        back: "images/card15-back.jpg",
+        frontText: "Image missing: card15-front.jpg",
+        backText: "Image missing: card15-back.jpg"
+      },
+      {
+        front: "images/card16-front.jpg",
+        back: "images/card16-back.jpg",
+        frontText: "Image missing: card16-front.jpg",
+        backText: "Image missing: card16-back.jpg"
+      },
+      {
+        front: "images/card17-front.jpg",
+        back: "images/card17-back.jpg",
+        frontText: "Image missing: card17-front.jpg",
+        backText: "Image missing: card17-back.jpg"
+      },
+      {
+        front: "images/card18-front.jpg",
+        back: "images/card18-back.jpg",
+        frontText: "Image missing: card18-front.jpg",
+        backText: "Image missing: card18-back.jpg"
+      }
+    ];
+
+    cards = cards.map((card, index) => ({ ...card, id: index + 1 }));
+    const originalCards = [...cards];
+
+    let currentIndex = 0;
+    let isFlipped = false;
+    let isShuffled = false;
+    const knownCards = new Set();
+    let audioContext = null;
+
+    const flashcard = document.getElementById("flashcard");
+    const frontImage = document.getElementById("frontImage");
+    const backImage = document.getElementById("backImage");
+    const frontText = document.getElementById("frontText");
+    const backText = document.getElementById("backText");
+    const progressNumber = document.getElementById("progressNumber");
+    const knownNumber = document.getElementById("knownNumber");
+    const modePill = document.getElementById("modePill");
+    const thumbs = document.getElementById("thumbs");
+    const completionOverlay = document.getElementById("completionOverlay");
+    const restartBtn = document.getElementById("restartBtn");
+    const progressBar = document.getElementById("progressBar");
+    const progressPercent = document.getElementById("progressPercent");
+    const shuffleBtn = document.getElementById("shuffleBtn");
+
+    function playTone(frequency, duration, type = "square", gainValue = 0.045) {
+      try {
+        if (!audioContext) {
+          audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        }
+
+        const oscillator = audioContext.createOscillator();
+        const gain = audioContext.createGain();
+
+        oscillator.type = type;
+        oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+
+        gain.gain.setValueAtTime(0, audioContext.currentTime);
+        gain.gain.linearRampToValueAtTime(gainValue, audioContext.currentTime + 0.01);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + duration);
+
+        oscillator.connect(gain);
+        gain.connect(audioContext.destination);
+
+        oscillator.start();
+        oscillator.stop(audioContext.currentTime + duration);
+      } catch (error) {
+        // Sound is optional.
+      }
+    }
+
+    function playButtonSound() {
+      playTone(520, 0.07, "square", 0.035);
+    }
+
+    function playFlipSound() {
+      playTone(isFlipped ? 420 : 620, 0.09, "triangle", 0.04);
+      setTimeout(() => playTone(isFlipped ? 620 : 420, 0.08, "triangle", 0.03), 55);
+    }
+
+    function playTaDaSound() {
+      playTone(523, 0.12, "triangle", 0.05);
+      setTimeout(() => playTone(659, 0.12, "triangle", 0.05), 110);
+      setTimeout(() => playTone(784, 0.18, "triangle", 0.055), 220);
+      setTimeout(() => playTone(1046, 0.24, "triangle", 0.05), 360);
+    }
+
+    function launchConfetti() {
+      const colours = ["#ffd23f", "#18a69a", "#ef4b91", "#91a7ff", "#55e08a", "#ffffff"];
+
+      for (let i = 0; i < 90; i++) {
+        const piece = document.createElement("div");
+        piece.className = "confetti-piece";
+        piece.style.left = Math.random() * 100 + "vw";
+        piece.style.background = colours[Math.floor(Math.random() * colours.length)];
+        piece.style.animationDuration = (1.8 + Math.random() * 1.4) + "s";
+        piece.style.animationDelay = (Math.random() * 0.45) + "s";
+        piece.style.transform = `rotate(${Math.random() * 360}deg)`;
+        document.body.appendChild(piece);
+
+        setTimeout(() => piece.remove(), 3600);
+      }
+    }
+
+    function showCompletion() {
+      completionOverlay.classList.remove("hidden");
+      playTaDaSound();
+      launchConfetti();
+    }
+
+    function hideCompletion() {
+      completionOverlay.classList.add("hidden");
+    }
+
+    function setImageOrText(imageEl, textEl, imageSrc, textValue) {
+      imageEl.classList.add("hidden");
+      textEl.classList.add("hidden");
+      imageEl.removeAttribute("src");
+      textEl.textContent = "";
+
+      if (imageSrc) {
+        imageEl.onload = () => {
+          if (imageEl === frontImage && imageEl.naturalWidth && imageEl.naturalHeight) {
+            flashcard.style.setProperty("--loaded-card-ratio", `${imageEl.naturalWidth} / ${imageEl.naturalHeight}`);
+          }
+        };
+
+        imageEl.src = imageSrc;
+        imageEl.classList.remove("hidden");
+
+        imageEl.onerror = () => {
+          imageEl.classList.add("hidden");
+          textEl.textContent = textValue || "Image could not be loaded.";
+          textEl.classList.remove("hidden");
+        };
+      } else {
+        textEl.textContent = textValue || "";
+        textEl.classList.remove("hidden");
+      }
+    }
+
+    function renderCard() {
+      const card = cards[currentIndex];
+
+      setImageOrText(frontImage, frontText, card.front, card.frontText);
+      setImageOrText(backImage, backText, card.back, card.backText);
+
+      isFlipped = false;
+      flashcard.classList.remove("flipped");
+      updateStatus();
+      renderThumbs();
+    }
+
+    function updateStatus() {
+      const completedPercent = Math.round((knownCards.size / cards.length) * 100);
+      progressNumber.textContent = `${knownCards.size} / ${cards.length}`;
+      knownNumber.textContent = "";
+      progressBar.style.width = `${completedPercent}%`;
+      progressPercent.textContent = `${completedPercent}% complete`;
+      if (modePill) modePill.textContent = isFlipped ? "Back" : "Front";
+    }
+
+    function flipCard() {
+      isFlipped = !isFlipped;
+      flashcard.classList.toggle("flipped", isFlipped);
+      playFlipSound();
+      updateStatus();
+    }
+
+    function nextCard() {
+      playButtonSound();
+      currentIndex = (currentIndex + 1) % cards.length;
+      renderCard();
+    }
+
+    function previousCard() {
+      playButtonSound();
+      currentIndex = (currentIndex - 1 + cards.length) % cards.length;
+      renderCard();
+    }
+
+    function markKnown() {
+      playButtonSound();
+      knownCards.add(cards[currentIndex].id);
+      updateStatus();
+      renderThumbs();
+
+      if (knownCards.size === cards.length) {
+        showCompletion();
+        return;
+      }
+
+      currentIndex = (currentIndex + 1) % cards.length;
+      renderCard();
+    }
+
+    function shuffleCards() {
+      playButtonSound();
+
+      if (isShuffled) {
+        cards = [...originalCards];
+        isShuffled = false;
+        shuffleBtn.textContent = "Shuffle";
+      } else {
+        cards = [...cards];
+        for (let i = cards.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [cards[i], cards[j]] = [cards[j], cards[i]];
+        }
+        isShuffled = true;
+        shuffleBtn.textContent = "Unshuffle";
+      }
+
+      currentIndex = 0;
+      hideCompletion();
+      renderCard();
+    }
+
+    function renderThumbs() {
+      thumbs.innerHTML = "";
+
+      cards.forEach((card, index) => {
+        const thumb = document.createElement("button");
+        thumb.type = "button";
+        thumb.className = "thumb";
+        thumb.textContent = card.id;
+        thumb.setAttribute("aria-label", `Go to card ${card.id}`);
+
+        if (index === currentIndex) thumb.classList.add("active");
+        if (knownCards.has(card.id)) thumb.classList.add("done");
+
+        thumb.addEventListener("click", () => {
+          playButtonSound();
+          currentIndex = index;
+          renderCard();
+        });
+
+        thumbs.appendChild(thumb);
+      });
+    }
+
+    flashcard.addEventListener("click", flipCard);
+    const flipBtn = document.getElementById("flipBtn");
+    if (flipBtn) flipBtn.addEventListener("click", flipCard);
+    document.getElementById("nextBtn").addEventListener("click", nextCard);
+    document.getElementById("prevBtn").addEventListener("click", previousCard);
+    document.getElementById("knownBtn").addEventListener("click", markKnown);
+    shuffleBtn.addEventListener("click", shuffleCards);
+
+    restartBtn.addEventListener("click", () => {
+      playButtonSound();
+      knownCards.clear();
+      cards = [...originalCards];
+      isShuffled = false;
+      shuffleBtn.textContent = "Shuffle";
+      currentIndex = 0;
+      hideCompletion();
+      renderCard();
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "ArrowRight") nextCard();
+      if (event.key === "ArrowLeft") previousCard();
+      if (event.key === " " || event.key === "Enter") {
+        event.preventDefault();
+        flipCard();
+      }
+    });
+
+    renderCard();
+  </script>
+</body>
+</html>
